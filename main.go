@@ -24,22 +24,25 @@ func main() {
 	// Khởi tạo repositories
 	userRepo := repositories.NewUserRepository(config.GetDB())
 	articleRepo := repositories.NewArticleRepository(config.GetDB())
+	commentRepo := repositories.NewCommentRepository(config.GetDB())
 
 	// Khởi tạo services
 	authService := services.NewAuthService(userRepo)
 	userService := services.NewUserService(userRepo)
 	articleService := services.NewArticleService(articleRepo, userRepo)
+	commentService := services.NewCommentService(commentRepo, articleRepo)
 
 	// Khởi tạo controllers
 	authController := controllers.NewAuthController(authService)
 	userController := controllers.NewUserController(userService)
 	articleController := controllers.NewArticleController(articleService)
+	commentController := controllers.NewCommentController(commentService)
 
 	// Setup Gin router
 	router := gin.Default()
 
 	// Setup routes
-	routes.SetupRoutes(router, authController, userController, articleController)
+	routes.SetupRoutes(router, authController, userController, articleController, commentController)
 
 	// Start server
 	port := config.AppConfig.Server.Port

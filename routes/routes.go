@@ -12,6 +12,7 @@ func SetupRoutes(
 	authController *controllers.AuthController,
 	userController *controllers.UserController,
 	articleController *controllers.ArticleController,
+	commentController *controllers.CommentController,
 ) {
 	// CORS middleware
 	router.Use(middlewares.CORSMiddleware())
@@ -32,12 +33,22 @@ func SetupRoutes(
 			// Public article routes
 			articles.GET("/:slug", articleController.GetArticle) // GET /api/articles/:slug
 
+			// Comments routes (public read, protected write)
+			articles.GET("/:slug/comments", commentController.GetComments) // GET /api/articles/:slug/comments
+
 			// Protected article routes
-			articles.Use(middlewares.AuthMiddleware())
-			articles.GET("/feed", articleController.GetFeed)           // GET /api/articles/feed
-			articles.POST("", articleController.CreateArticle)         // POST /api/articles
-			articles.PUT("/:slug", articleController.UpdateArticle)    // PUT /api/articles/:slug
-			articles.DELETE("/:slug", articleController.DeleteArticle) // DELETE /api/articles/:slug
+			articlesAuth := articles.Group("")
+			articlesAuth.Use(middlewares.AuthMiddleware())
+			{
+				articlesAuth.GET("/feed", articleController.GetFeed)           // GET /api/articles/feed
+				articlesAuth.POST("", articleController.CreateArticle)         // POST /api/articles
+				articlesAuth.PUT("/:slug", articleController.UpdateArticle)    // PUT /api/articles/:slug
+				articlesAuth.DELETE("/:slug", articleController.DeleteArticle) // DELETE /api/articles/:slug
+
+				// Protected comment routes
+				articlesAuth.POST("/:slug/comments", commentController.AddComment)          // POST /api/articles/:slug/comments
+				articlesAuth.DELETE("/:slug/comments/:id", commentController.DeleteComment) // DELETE /api/articles/:slug/comments/:id
+			}
 		}
 
 		// Protected user routes
