@@ -1,312 +1,269 @@
 # Gin RealWorld API
 
-API backend được xây dựng với Go, Gin Framework và PostgreSQL theo chuẩn RealWorld API.
+A RealWorld API implementation using Go (Golang) with Gin framework, following the [RealWorld API Spec](https://realworld-docs.netlify.app/specifications/backend/api-response-format/).
 
-## Công nghệ sử dụng
+## 🚀 Tech Stack
 
-- **Go** 1.21+
-- **Gin** - HTTP Web Framework
-- **GORM** - ORM cho Go
-- **PostgreSQL** - Cơ sở dữ liệu
-- **JWT** - Authentication
-- **godotenv** - Quản lý biến môi trường
+- **Framework**: [Gin](https://gin-gonic.com/) - High-performance HTTP web framework
+- **Database**: PostgreSQL with [GORM](https://gorm.io/) ORM
+- **Authentication**: JWT (JSON Web Tokens)
+- **Password Hashing**: bcrypt
+- **Configuration**: godotenv for environment variables
+- **Validation**: Gin validator (built-in)
 
-## Cấu trúc thư mục
+## 📁 Project Structure
 
 ```
 gin-realworld-api/
-├── controllers/                 # HTTP handlers
-│   ├── auth_controller.go      # Register, Login
-│   └── user_controller.go      # User management
-├── services/                    # Business logic
-│   └── user_service.go
-├── repositories/                # Data access layer
-│   └── user_repository.go
-├── models/                      # Database models (GORM)
-│   └── user.go
-├── middlewares/                 # HTTP middlewares
-│   └── auth.go                 # JWT authentication & CORS
-├── dto/                         # Data Transfer Objects
-│   └── user_dto.go             # Request/Response structs
-├── config/                      # Configuration
-│   ├── config.go               # Environment variables
-│   ├── database.go             # Database connection
-│   └── migration.go            # Auto migrations
-├── utils/                       # Helper functions
-│   ├── auth.go                 # JWT & password hashing
-│   └── errors.go               # Error responses
-├── routes/                      # Route definitions
-│   └── routes.go
-├── main.go                      # Entry point
-├── .env                         # Environment variables
-├── .env.example
-├── go.mod
-├── go.sum
-└── README.md
+├── config/           # Configuration and database setup
+├── controllers/      # HTTP request handlers
+├── dto/             # Data Transfer Objects (request/response)
+├── middlewares/     # Custom middleware (auth, CORS)
+├── models/          # Database models
+├── repositories/    # Data access layer
+├── routes/          # Route definitions
+├── services/        # Business logic layer
+├── utils/           # Utility functions (JWT, slug, errors)
+├── docs/            # Documentation
+├── .env.example     # Environment variables template
+├── go.mod           # Go module dependencies
+└── main.go          # Application entry point
 ```
 
-## Kiến trúc
+## 🔧 Installation & Setup
 
-```
-┌─────────────────────────────────────────────────┐
-│              HTTP Request                       │
-└─────────────────┬───────────────────────────────┘
-                  │
-┌─────────────────▼───────────────────────────────┐
-│  Controllers (HTTP Handlers)                    │
-│  - AuthController: Register, Login              │
-│  - UserController: GetCurrentUser, UpdateUser   │
-└─────────────────┬───────────────────────────────┘
-                  │
-┌─────────────────▼───────────────────────────────┐
-│  Services (Business Logic)                      │
-│  - UserService                                  │
-└─────────────────┬───────────────────────────────┘
-                  │
-┌─────────────────▼───────────────────────────────┐
-│  Repositories (Data Access)                     │
-│  - UserRepository (Interface-based)             │
-└─────────────────┬───────────────────────────────┘
-                  │
-┌─────────────────▼───────────────────────────────┐
-│           PostgreSQL Database                   │
-└─────────────────────────────────────────────────┘
-```
+### Prerequisites
+- Go 1.24 or higher
+- PostgreSQL database
 
-## Cài đặt
+### Steps
 
-### 1. Clone repository
-
+1. **Clone the repository**
 ```bash
-git clone <repository-url>
+git clone https://github.com/khanhnp-2797/gin-realworld-api.git
 cd gin-realworld-api
 ```
 
-### 2. Cài đặt dependencies
-
+2. **Install dependencies**
 ```bash
 go mod download
 ```
 
-### 3. Cấu hình database
-
-Tạo database PostgreSQL:
-
-```bash
-createdb realworld_db
-```
-
-### 4. Cấu hình biến môi trường
-
-File `.engin_realworld
-```
-
-### 4. Cấu hình biến môi trường
-
-Copy file `.env.example` và chỉnh sửa thông tin:
-
+3. **Configure environment variables**
 ```bash
 cp .env.example .env
 ```
 
-Nội dung `.env`:
-
+Edit `.env` with your configuration:
 ```env
-ENV=development
-PORT=8080
-
 DB_HOST=localhost
 DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=gin_realworld
+DB_USER=your_user
+DB_PASSWORD=your_password
+DB_NAME=realworld_db
 DB_SSLMODE=disable
 
-JWT_SECRET=your-secret-key-change-this-in-production
+JWT_SECRET=your-secret-key-here
 JWT_EXPIRATION_HOURS=72
 
+SERVER_PORT=8080
+```
+
+4. **Run the application**
+```bash
 go run main.go
 ```
 
-### Build và chạy
+The server will start at `http://localhost:8080`
 
-```bash
-# Build binary
-go build -o bin/app .
-go build -o bin/app cmd/app/main.go
+## 📚 API Endpoints
 
-# Run binary
-./bAPI Endpoints
+### Authentication
+- `POST /api/users` - Register a new user
+- `POST /api/users/login` - Login (returns JWT token with Bearer prefix)
 
-Tuân thủ [RealWorld API Spec](https://realworld-docs.netlify.app/docs/specs/backend-specs/endpoints)
+### User Management
+- `GET /api/user` - Get current user (requires auth)
+- `PUT /api/user` - Update current user (requires auth)
 
-### Authentication (Public)
+### Articles
+- `GET /api/articles` - List articles (with pagination, filters)
+  - Query params: `limit`, `offset`, `tag`, `author`, `favorited`
+- `GET /api/articles/feed` - Get user's feed (requires auth)
+- `GET /api/articles/:slug` - Get article by slug
+- `POST /api/articles` - Create article (requires auth)
+- `PUT /api/articles/:slug` - Update article (requires auth)
+- `DELETE /api/articles/:slug` - Delete article (requires auth)
 
-- `POST /api/users` - Đăng ký user mới
-- `POST /api/users/login` - Đăng nhập
+### Favorites
+- `POST /api/articles/:slug/favorite` - Favorite article (requires auth)
+- `DELETE /api/articles/:slug/favorite` - Unfavorite article (requires auth)
 
-### User (Protected - requires `Authorization: Token <jwt>`)
+### Comments
+- `GET /api/articles/:slug/comments` - Get comments for article
+- `POST /api/articles/:slug/comments` - Add comment (requires auth)
+- `DELETE /api/articles/:slug/comments/:id` - Delete comment (requires auth)
 
-- `GET /api/user` - Lấy thông tin user hiện tại
-- `PUT /api/user` - Cập nhật thông tin usn tại
-- `PUT /api/user` - Cập nhật thông tin user
+### Tags
+- `GET /api/tags` - Get all tags
 
-### Health Check
+## 🔐 Authentication
 
-- `GET /health` - Kiểm tra trạng thái server
+The API uses JWT for authentication. After login, the token is returned with `Bearer` prefix:
 
-## Request/Response Format
+```json
+{
+  "user": {
+    "email": "user@example.com",
+    "token": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "username": "username",
+    "bio": "I work at State Farm",
+    "image": "https://api.realworld.io/images/demo-avatar.png"
+  }
+}
+```
 
-**Tất cả requests và responses đều wrap data trong object `user`:**
+Include the token in the Authorization header for protected endpoints:
+```
+Authorization: Bearer <your-token>
+```
 
-### Đăng ký - POST /api/users
+## 📊 Database Schema
+
+### Main Tables
+- **users** - User accounts
+- **articles** - Blog articles with slug-based URLs
+- **comments** - Comments on articles
+- **tags** - Article tags
+- **favorites** - User favorites (many-to-many: users ↔ articles)
+- **follows** - User following relationships
+- **article_tags** - Article-tag associations (many-to-many)
+
+See [database_schema.md](docs/database_schema.md) for detailed schema.
+
+## ✨ Features
+
+### Implemented
+- ✅ User registration and authentication (JWT)
+- ✅ Token format: `Bearer <token>` (only login returns token)
+- ✅ User profile management
+- ✅ CRUD operations for articles
+- ✅ Article pagination with filters (tag, author, favorited)
+- ✅ Automatic slug generation from title
+- ✅ Slug update when title changes
+- ✅ Comments system
+- ✅ Favorites system
+- ✅ Tags management
+- ✅ User feed (articles from followed users)
+- ✅ Comprehensive validation
+- ✅ Structured error handling
+- ✅ CORS support
+
+### Security Features
+- Password hashing with bcrypt
+- JWT token validation middleware
+- Authorization checks for protected resources
+- Input validation on all endpoints
+
+## 🧪 API Testing
+
+### Example Requests
+
+**Register**
 ```bash
 curl -X POST http://localhost:8080/api/users \
   -H "Content-Type: application/json" \
   -d '{
     "user": {
-      "username": "jake",
-      "email": "jake@jake.jake",
-      "password": "jakejake"
+      "username": "testuser",
+      "email": "test@example.com",
+      "password": "password123"
     }
   }'
 ```
 
-**Response (201 Created):**
-```json
-{
-  "user": {
-    "username": "jake",
-    "email": "jake@jake.jake",
-    "bio": "",
-    "image": "",
-    "token": "jwt.token.here"
-  }
-}
-```
-
-### Đăng nhập - POST /api/users/login
+**Login**
 ```bash
 curl -X POST http://localhost:8080/api/users/login \
   -H "Content-Type: application/json" \
   -d '{
     "user": {
-      "email": "jake@jake.jake",
-      "password": "jakejake"
+      "email": "test@example.com",
+      "password": "password123"
     }
   }'
 ```
 
-### Lấy thông tin user - GET /api/user
+**Create Article**
 ```bash
-curl -X GET http://localhost:8080/api/user \
-  -H "Authorization: Token YOUR_JWT_TOKEN"
-```
-
-### Cập nhật user - PUT /api/user
-```bash
-curl -X PUT http://localhost:8080/api/user \
+curl -X POST http://localhost:8080/api/articles \
   -H "Content-Type: application/json" \
-  -H "Authorization: Token YOUR_JWT_TOKEN" \
+  -H "Authorization: Bearer <your-token>" \
   -d '{
-    "user": {
-      "bio": "I like to code",
-      "image": "https://example.com/avatar.jpg"
+    "article": {
+      "title": "How to train your dragon",
+      "description": "Ever wonder how?",
+      "body": "You have to believe",
+      "tagList": ["dragons", "training"]
     }
   }'
 ```
 
-### Error Response Format
+## 🛠️ Error Handling
+
+The API returns structured error responses:
+
 ```json
 {
   "errors": {
-    "body": ["error message"]
+    "body": [
+      "email already exists"
+    ]
   }
 }
 ```
 
-**Lưu ý:**
-- Sử dụng `Token` thay vì `Bearer` trong Authorization header
-- Status code 422 (Unprocessable Entity) cho validation errors
+### HTTP Status Codes
+- `200` - Success
+- `201` - Created
+- `204` - No Content (successful deletion)
+- `401` - Unauthorized (missing/invalid token)
+- `403` - Forbidden (insufficient permissions)
+- `404` - Not Found
+- `409` - Conflict (duplicate resource)
+- `422` - Unprocessable Entity (validation errors)
+- `500` - Internal Server Error
 
-## Ví dụ sử dụng API
+## 📝 Validation Rules
 
-### Đăng ký user
+### User
+- Username: 3-50 characters
+- Email: Valid email format
+- Password: Minimum 8 characters
 
-```bash
-curl -X POST http://localhost:8080/api/users \
-  -H "Content-Type: application/json" \
-  -d '{
-    "user": {
-      "username": "jake",
-      "email": "jake@jake.jake",
-      "password": "jakejake"
-    }
-  }'
-```
-uild binary
-go build -o bin/app cmd/app/main.go
+### Article
+- Title: 1-200 characters (required)
+- Description: 1-500 characters (required)
+- Body: Minimum 1 character (required)
 
-# Format code
-go fmt ./...
+### Comment
+- Body: 1-2000 characters (required)
 
-# Run tests
-go test ./...
+## 🤝 Contributing
 
-# Check for errors
-go vet ./...
-```
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-## Tips cho người mới học Go
+## 📄 License
 
-1. **Exported vs Unexported**:
-   - `UserService` (uppercase) = public/exported
-   - `userService` (lowercase) = private/unexported
+This project is licensed under the MIT License.
 
-2. **Error handling**: Luôn check error ngay sau function call
+## 👨‍💻 Author
 
-3. **Nil checking**: Check nil trước khi dereference pointer
+**Nguyen Phi Khanh**
+- GitHub: [@khanhnp-2797](https://github.com/khanhnp-2797)
 
-4. **Go is not OOP**: Không có classes, inheritance. Dùng composition.
+## 🙏 Acknowledgments
 
-5. **Defer**: Dùng để cleanup (như finally trong JS)
-   ```go
-   defer config.CloseDatabase()  // Sẽ chạy khi function return
-   ```
-
-## Deployment
-
-### Docker (nếu cần)
-
-```bash
-# Build image
-docker build -t gin-realworld-api .
-
-# Run container
-docker run -p 8080:8080 --env-file .env gin-realworld-api
-```
-
-## License
-
-MIT
-main.go
-
-# Build binary
-go build -o bin/app .
-
-# Format code
-go fmt ./...
-
-# Run tests
-go test ./...
-
-# Check for errors
-go vet ./...
-```
-
-## Resources
-
-- [Go Documentation](https://go.dev/doc/)
-- [Gin Documentation](https://gin-gonic.com/docs/)
-- [GORM Documentation](https://gorm.io/docs/)
-- [RealWorld API Spec](https://realworld-docs.netlify.app/docs/specs/backend-specs/endpoints)
+- [RealWorld API Spec](https://realworld-docs.netlify.app/)
+- [Gin Web Framework](https://gin-gonic.com/)
+- [GORM](https://gorm.io/)
