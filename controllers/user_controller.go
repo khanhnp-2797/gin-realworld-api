@@ -25,12 +25,17 @@ func NewUserController(userService services.UserService) *UserController {
 func (uc *UserController) Register(c *gin.Context) {
 	var req dto.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, utils.ValidationError("Invalid request body"))
+		c.JSON(http.StatusUnprocessableEntity, utils.ValidationError(err.Error()))
 		return
 	}
 
 	response, err := uc.userService.Register(&req)
 	if err != nil {
+		// Check for specific errors
+		if err.Error() == "email already exists" || err.Error() == "username already exists" {
+			c.JSON(http.StatusConflict, utils.ConflictError(err.Error()))
+			return
+		}
 		c.JSON(http.StatusUnprocessableEntity, utils.NewErrorResponse(err.Error()))
 		return
 	}

@@ -77,12 +77,20 @@ func (ac *ArticleController) UpdateArticle(c *gin.Context) {
 
 	var req dto.UpdateArticleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, utils.ValidationError("Invalid request body"))
+		c.JSON(http.StatusUnprocessableEntity, utils.ValidationError(err.Error()))
 		return
 	}
 
 	response, err := ac.articleService.UpdateArticle(slug, userID.(uint), &req)
 	if err != nil {
+		if err.Error() == "unauthorized to update this article" {
+			c.JSON(http.StatusForbidden, utils.ForbiddenError(err.Error()))
+			return
+		}
+		if err.Error() == "article not found" {
+			c.JSON(http.StatusNotFound, utils.NotFoundError("Article"))
+			return
+		}
 		c.JSON(http.StatusUnprocessableEntity, utils.NewErrorResponse(err.Error()))
 		return
 	}
@@ -102,6 +110,14 @@ func (ac *ArticleController) DeleteArticle(c *gin.Context) {
 	slug := c.Param("slug")
 
 	if err := ac.articleService.DeleteArticle(slug, userID.(uint)); err != nil {
+		if err.Error() == "unauthorized to delete this article" {
+			c.JSON(http.StatusForbidden, utils.ForbiddenError(err.Error()))
+			return
+		}
+		if err.Error() == "article not found" {
+			c.JSON(http.StatusNotFound, utils.NotFoundError("Article"))
+			return
+		}
 		c.JSON(http.StatusUnprocessableEntity, utils.NewErrorResponse(err.Error()))
 		return
 	}
@@ -122,6 +138,70 @@ func (ac *ArticleController) GetFeed(c *gin.Context) {
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
 	response, err := ac.articleService.GetFeed(userID.(uint), limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, utils.NewErrorResponse(err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// FavoriteArticle - Thích bài viết
+// POST /api/articles/:slug/favorite
+func (ac *ArticleController) FavoriteArticle(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, utils.AuthError(""))
+		return
+	}
+
+	slug := c.Param("slug")
+
+	response, err := ac.articleService.FavoriteArticle(slug, userID.(uint))
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, utils.NewErrorResponse(err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// UnfavoriteArticle - Bỏ thích bài viết
+// DELETE /api/articles/:slug/favorite
+func (ac *ArticleController) UnfavoriteArticle(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, utils.AuthError(""))
+		return
+	}
+
+	slug := c.Param("slug")
+
+	response, err := ac.articleService.UnfavoriteArticle(slug, userID.(uint))
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, utils.NewErrorResponse(err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// GetArticles - Lấy danh sách bài viết với pagination
+// GET /api/articles
+func (ac *ArticleController) GetArticles(c *gin.Context) {
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	tag := c.Query("tag")
+	author := c.Query("author")
+	favorited := c.Query("favorited")
+
+	var userID *uint
+	if id, exists := c.Get("userID"); exists {
+		uid := id.(uint)
+		userID = &uid
+	}
+
+	response, err := ac.articleService.GetArticles(userID, limit, offset, tag, author, favorited)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, utils.NewErrorResponse(err.Error()))
 		return

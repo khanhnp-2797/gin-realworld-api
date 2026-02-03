@@ -30,3 +30,24 @@ func AuthError(message string) dto.ErrorResponse {
 func NotFoundError(resource string) dto.ErrorResponse {
 	return NewErrorResponse(resource + " not found")
 }
+
+// UnauthorizedError - Unauthorized access error
+func UnauthorizedError(message string) dto.ErrorResponse {
+	if message == "" {
+		message = "Unauthorized access"
+	}
+	return NewErrorResponse(message)
+}
+
+// ForbiddenError - Forbidden action error
+func ForbiddenError(message string) dto.ErrorResponse {
+	if message == "" {
+		message = "Forbidden"
+	}
+	return NewErrorResponse(message)
+}
+
+// ConflictError - Resource conflict error
+func ConflictError(message string) dto.ErrorResponse {
+	return NewErrorResponse(message)
+}

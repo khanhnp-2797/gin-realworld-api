@@ -5,7 +5,7 @@ import "time"
 // AddCommentRequest - Request thêm comment
 type AddCommentRequest struct {
 	Comment struct {
-		Body string `json:"body" binding:"required"`
+		Body string `json:"body" binding:"required,min=1,max=2000"`
 	} `json:"comment" binding:"required"`
 }
 

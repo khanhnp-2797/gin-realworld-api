@@ -17,6 +17,9 @@ type ArticleService interface {
 	UpdateArticle(slug string, userID uint, req *dto.UpdateArticleRequest) (*dto.ArticleResponse, error)
 	DeleteArticle(slug string, userID uint) error
 	GetFeed(userID uint, limit, offset int) (*dto.ArticlesResponse, error)
+	FavoriteArticle(slug string, userID uint) (*dto.ArticleResponse, error)
+	UnfavoriteArticle(slug string, userID uint) (*dto.ArticleResponse, error)
+	GetArticles(userID *uint, limit, offset int, tag, author, favorited string) (*dto.ArticlesResponse, error)
 }
 
 type articleService struct {
@@ -162,6 +165,64 @@ func (s *articleService) GetFeed(userID uint, limit, offset int) (*dto.ArticlesR
 	}, nil
 }
 
+func (s *articleService) FavoriteArticle(slug string, userID uint) (*dto.ArticleResponse, error) {
+	article, err := s.articleRepo.FindBySlug(slug)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("article not found")
+		}
+		return nil, err
+	}
+
+	if err := s.articleRepo.FavoriteArticle(userID, article.ID); err != nil {
+		return nil, err
+	}
+
+	return s.buildArticleResponse(article, userID), nil
+}
+
+func (s *articleService) UnfavoriteArticle(slug string, userID uint) (*dto.ArticleResponse, error) {
+	article, err := s.articleRepo.FindBySlug(slug)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("article not found")
+		}
+		return nil, err
+	}
+
+	if err := s.articleRepo.UnfavoriteArticle(userID, article.ID); err != nil {
+		return nil, err
+	}
+
+	return s.buildArticleResponse(article, userID), nil
+}
+
+func (s *articleService) GetArticles(userID *uint, limit, offset int, tag, author, favorited string) (*dto.ArticlesResponse, error) {
+	if limit == 0 {
+		limit = 20
+	}
+
+	articles, err := s.articleRepo.GetArticles(limit, offset, tag, author, favorited)
+	if err != nil {
+		return nil, err
+	}
+
+	var currentUserID uint
+	if userID != nil {
+		currentUserID = *userID
+	}
+
+	var articleList []dto.ArticleData
+	for _, article := range articles {
+		articleList = append(articleList, *s.buildArticleData(&article, currentUserID))
+	}
+
+	return &dto.ArticlesResponse{
+		Articles:      articleList,
+		ArticlesCount: len(articleList),
+	}, nil
+}
+
 func (s *articleService) buildArticleResponse(article *models.Article, userID uint) *dto.ArticleResponse {
 	return &dto.ArticleResponse{
 		Article: *s.buildArticleData(article, userID),
@@ -174,6 +235,15 @@ func (s *articleService) buildArticleData(article *models.Article, userID uint) 
 		tagList[i] = tag.Name
 	}
 
+	// Check if favorited
+	favorited := false
+	if userID > 0 {
+		favorited, _ = s.articleRepo.IsFavorited(userID, article.ID)
+	}
+
+	// Get favorites count
+	favoritesCount, _ := s.articleRepo.GetFavoritesCount(article.ID)
+
 	return &dto.ArticleData{
 		Slug:           article.Slug,
 		Title:          article.Title,
@@ -182,8 +252,8 @@ func (s *articleService) buildArticleData(article *models.Article, userID uint) 
 		TagList:        tagList,
 		CreatedAt:      article.CreatedAt,
 		UpdatedAt:      article.UpdatedAt,
-		Favorited:      false, // TODO: implement favorite functionality
-		FavoritesCount: 0,     // TODO: implement favorite count
+		Favorited:      favorited,
+		FavoritesCount: int(favoritesCount),
 		Author: dto.ArticleAuthor{
 			Username:  article.Author.Username,
 			Bio:       article.Author.Bio,

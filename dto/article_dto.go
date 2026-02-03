@@ -5,9 +5,9 @@ import "time"
 // CreateArticleRequest - Request tạo bài viết mới
 type CreateArticleRequest struct {
 	Article struct {
-		Title       string   `json:"title" binding:"required"`
-		Description string   `json:"description" binding:"required"`
-		Body        string   `json:"body" binding:"required"`
+		Title       string   `json:"title" binding:"required,min=1,max=200"`
+		Description string   `json:"description" binding:"required,min=1,max=500"`
+		Body        string   `json:"body" binding:"required,min=1"`
 		TagList     []string `json:"tagList"`
 	} `json:"article" binding:"required"`
 }
@@ -15,9 +15,9 @@ type CreateArticleRequest struct {
 // UpdateArticleRequest - Request cập nhật bài viết
 type UpdateArticleRequest struct {
 	Article struct {
-		Title       string `json:"title"`
-		Description string `json:"description"`
-		Body        string `json:"body"`
+		Title       string `json:"title" binding:"omitempty,min=1,max=200"`
+		Description string `json:"description" binding:"omitempty,min=1,max=500"`
+		Body        string `json:"body" binding:"omitempty,min=1"`
 	} `json:"article" binding:"required"`
 }
 

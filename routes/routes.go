@@ -13,6 +13,7 @@ func SetupRoutes(
 	userController *controllers.UserController,
 	articleController *controllers.ArticleController,
 	commentController *controllers.CommentController,
+	tagController *controllers.TagController,
 ) {
 	// CORS middleware
 	router.Use(middlewares.CORSMiddleware())
@@ -27,10 +28,14 @@ func SetupRoutes(
 			users.POST("/login", authController.Login) // POST /api/users/login
 		}
 
+		// Tags routes (public)
+		api.GET("/tags", tagController.GetTags) // GET /api/tags
+
 		// Articles routes
 		articles := api.Group("/articles")
 		{
 			// Public article routes
+			articles.GET("", articleController.GetArticles)      // GET /api/articles
 			articles.GET("/:slug", articleController.GetArticle) // GET /api/articles/:slug
 
 			// Comments routes (public read, protected write)
@@ -48,6 +53,10 @@ func SetupRoutes(
 				// Protected comment routes
 				articlesAuth.POST("/:slug/comments", commentController.AddComment)          // POST /api/articles/:slug/comments
 				articlesAuth.DELETE("/:slug/comments/:id", commentController.DeleteComment) // DELETE /api/articles/:slug/comments/:id
+
+				// Favorite routes
+				articlesAuth.POST("/:slug/favorite", articleController.FavoriteArticle)     // POST /api/articles/:slug/favorite
+				articlesAuth.DELETE("/:slug/favorite", articleController.UnfavoriteArticle) // DELETE /api/articles/:slug/favorite
 			}
 		}
 
