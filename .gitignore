@@ -12,6 +12,7 @@
 
 # Output of the go coverage tool
 *.out
+*.html
 
 # Go workspace file
 go.work
@@ -21,6 +22,8 @@ vendor/
 
 # Environment files
 .env
+.env.local
+.env.*.local
 
 # IDE files
 .vscode/
@@ -28,6 +31,7 @@ vendor/
 *.swp
 *.swo
 *~
+.DS_Store
 
 # OS files
 .DS_Store
@@ -45,3 +49,8 @@ build/
 *.db
 *.sqlite
 *.sqlite3
+
+# Temporary files
+tmp/
+temp/
+*.tmp
