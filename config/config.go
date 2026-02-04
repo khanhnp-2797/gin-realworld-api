@@ -8,20 +8,12 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// Config - Cấu trúc config của app
 type Config struct {
-	Server   ServerConfig
 	Database DatabaseConfig
 	JWT      JWTConfig
+	Server   ServerConfig
 }
 
-// ServerConfig - Cấu hình server
-type ServerConfig struct {
-	Port string
-	Env  string
-}
-
-// DatabaseConfig - Cấu hình database
 type DatabaseConfig struct {
 	Host     string
 	Port     string
@@ -31,47 +23,62 @@ type DatabaseConfig struct {
 	SSLMode  string
 }
 
-// JWTConfig - Cấu hình JWT
 type JWTConfig struct {
 	Secret          string
 	ExpirationHours int
 }
 
-var AppConfig *Config
+type ServerConfig struct {
+	Port string
+}
 
-// LoadConfig - Load config từ environment variables
+var (
+	AppConfig = &Config{
+		JWT: JWTConfig{
+			Secret:          "default-secret",
+			ExpirationHours: 72,
+		},
+		Server: ServerConfig{
+			Port: "8080",
+		},
+	}
+)
+
 func LoadConfig() {
-	// Load .env file
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("No .env file found, using environment variables")
 	}
 
-	expirationHours, _ := strconv.Atoi(getEnv("JWT_EXPIRATION_HOURS", "72"))
+	AppConfig.Database = DatabaseConfig{
+		Host:     getEnv("DB_HOST", "localhost"),
+		Port:     getEnv("DB_PORT", "5432"),
+		User:     getEnv("DB_USER", "postgres"),
+		Password: getEnv("DB_PASSWORD", ""),
+		DBName:   getEnv("DB_NAME", "realworld_db"),
+		SSLMode:  getEnv("DB_SSLMODE", "disable"),
+	}
 
-	AppConfig = &Config{
-		Server: ServerConfig{
-			Port: getEnv("PORT", "8080"),
-			Env:  getEnv("ENV", "development"),
-		},
-		Database: DatabaseConfig{
-			Host:     getEnv("DB_HOST", "localhost"),
-			Port:     getEnv("DB_PORT", "5432"),
-			User:     getEnv("DB_USER", "postgres"),
-			Password: getEnv("DB_PASSWORD", "postgres"),
-			DBName:   getEnv("DB_NAME", "gin_realworld"),
-			SSLMode:  getEnv("DB_SSLMODE", "disable"),
-		},
-		JWT: JWTConfig{
-			Secret:          getEnv("JWT_SECRET", "your-secret-key"),
-			ExpirationHours: expirationHours,
-		},
+	AppConfig.JWT = JWTConfig{
+		Secret:          getEnv("JWT_SECRET", "your-secret-key"),
+		ExpirationHours: getEnvAsInt("JWT_EXPIRATION_HOURS", 72),
+	}
+
+	AppConfig.Server = ServerConfig{
+		Port: getEnv("SERVER_PORT", "8080"),
 	}
 }
 
-// getEnv - Lấy env variable với default value
-func getEnv(key string, defaultValue string) string {
-	value := os.Getenv(key)
-	if value == "" {
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
+func getEnvAsInt(key string, defaultValue int) int {
+	value, err := strconv.Atoi(getEnv(key, strconv.Itoa(defaultValue)))
+	if err != nil {
 		return defaultValue
 	}
 	return value

@@ -1,0 +1,18 @@
+with-expecter: true
+mockname: "Mock{{.InterfaceName}}"
+outpkg: mocks
+dir: "tests/mocks"
+packages:
+  github.com/khanhnp-2797/gin-realworld-api/repositories:
+    interfaces:
+      UserRepository:
+      ArticleRepository:
+      CommentRepository:
+      TagRepository:
+  github.com/khanhnp-2797/gin-realworld-api/services:
+    interfaces:
+      UserService:
+      AuthService:
+      ArticleService:
+      CommentService:
+      TagService:
